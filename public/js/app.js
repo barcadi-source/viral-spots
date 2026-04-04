@@ -122,6 +122,8 @@ async function searchTrending() {
     const res = await fetch(`/api/trending?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&type=${currentType}`);
     if (!res.ok) throw new Error(await res.text());
     allResults = await res.json();
+    // 預設依近期評論速度排序
+    allResults.sort((a, b) => (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0));
     renderResults(allResults);
     renderMapMarkers(allResults);
 
@@ -230,7 +232,7 @@ function createCard(place, index) {
     <div class="card-scores">
       <div class="score-item">
         <div class="score-label">
-          <span>估計每日評論</span>
+          <span>近期評論速度</span>
           <span style="color:var(--accent)">${analysis.estimatedDailyRate} 則/天</span>
         </div>
         <div class="score-bar"><div class="score-fill viral" style="width:${Math.min(analysis.estimatedDailyRate / 5 * 100, 100)}%"></div></div>
@@ -359,7 +361,7 @@ async function openModal(place) {
         <div class="score-row">
           <div class="score-block">
             <div class="score-num viral">${analysis.estimatedDailyRate}</div>
-            <div class="score-sublabel">則/天（估計）</div>
+            <div class="score-sublabel">則/天（近期速度）</div>
           </div>
           <div class="score-block">
             <div class="score-num suspicious">${analysis.estimatedWeeklyVolume}</div>
