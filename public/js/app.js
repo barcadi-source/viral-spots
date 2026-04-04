@@ -307,7 +307,7 @@ async function openModal(place) {
         </div>
         <div class="review-time">${date}</div>
         <div class="review-text">${r.text || '（無文字評論）'}</div>
-        ${suspicious ? '<span class="review-flag">📌 極短評論，請留意</span>' : ''}
+        
       </div>
     `;
   }).join('');
