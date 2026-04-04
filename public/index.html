@@ -115,6 +115,34 @@
     </div>
   </div>
 
+  <!-- 手機版：底部滑出卡片 -->
+  <div class="mobile-bottom-sheet" id="mobileBottomSheet">
+    <div class="mobile-sheet-handle"></div>
+    <button class="mobile-sheet-close" onclick="closeMobileSheet()">✕</button>
+    <div id="mobileSheetContent"></div>
+  </div>
+
+  <!-- 手機版：搜尋結果浮標 -->
+  <div class="mobile-result-badge" id="mobileResultBadge" onclick="toggleMobileList()" style="display:none">
+    <span id="mobileResultCount">📍 0 間店家</span>
+    <span>▲ 查看列表</span>
+  </div>
+
+  <!-- 手機版：列表底部浮層 -->
+  <div class="mobile-bottom-sheet" id="mobileListSheet" style="max-height:80vh">
+    <div class="mobile-sheet-handle" onclick="closeMobileList()"></div>
+    <button class="mobile-sheet-close" onclick="closeMobileList()">✕</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span class="results-title" id="mobileResultsTitle">等待搜尋...</span>
+      <select class="sort-select" onchange="sortResults(this.value)">
+        <option value="daily">每日評論速度</option>
+        <option value="rating">評分</option>
+        <option value="recentRating">近期平均星數</option>
+      </select>
+    </div>
+    <div id="mobileResults" class="results-list" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-inner">

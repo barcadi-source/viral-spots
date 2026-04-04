@@ -109,6 +109,9 @@ function setType(el) {
   currentType = el.dataset.type;
 }
 
+// ── Mobile detection ────────────────────────────────────────────
+const isMobile = () => window.innerWidth <= 768;
+
 // ── Search ──────────────────────────────────────────────────────
 async function searchTrending() {
   if (!currentLat || !currentLng) return;
@@ -122,6 +125,13 @@ async function searchTrending() {
     allResults = await res.json();
     renderResults(allResults);
     renderMapMarkers(allResults);
+
+    // 手機版：顯示浮標
+    if (isMobile()) {
+      const badge = document.getElementById('mobileResultBadge');
+      badge.style.display = 'flex';
+      document.getElementById('mobileResultCount').textContent = `📍 ${allResults.length} 間店家`;
+    }
   } catch (e) {
     document.getElementById('results').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>搜尋失敗：${e.message}</p></div>`;
   } finally {
@@ -132,21 +142,33 @@ async function searchTrending() {
 // ── Render Results ──────────────────────────────────────────────
 function renderResults(data) {
   const container = document.getElementById('results');
+  const mobileContainer = document.getElementById('mobileResults');
   const title = document.getElementById('resultsTitle');
+  const mobileTitle = document.getElementById('mobileResultsTitle');
 
   if (!data.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>此範圍內未找到店家</p></div>`;
+    const empty = `<div class="empty-state"><div class="empty-icon">🔍</div><p>此範圍內未找到店家</p></div>`;
+    container.innerHTML = empty;
+    if (mobileContainer) mobileContainer.innerHTML = empty;
     title.textContent = '找不到結果';
+    if (mobileTitle) mobileTitle.textContent = '找不到結果';
     return;
   }
 
-  title.textContent = `找到 ${data.length} 間店家`;
+  const titleText = `找到 ${data.length} 間店家`;
+  title.textContent = titleText;
+  if (mobileTitle) mobileTitle.textContent = titleText;
   container.innerHTML = '';
+  if (mobileContainer) mobileContainer.innerHTML = '';
 
   data.forEach((place, i) => {
     const card = createCard(place, i);
     container.appendChild(card);
-    // Stagger animation
+    // 手機版也渲染一份
+    if (mobileContainer) {
+      const mobileCard = createCard(place, i);
+      mobileContainer.appendChild(mobileCard);
+    }
     setTimeout(() => card.style.animationDelay = '0ms', i * 50);
   });
 }
@@ -277,7 +299,14 @@ function renderMapMarkers(data) {
       </div>`
     });
 
-    m.addListener('click', () => openModal(place));
+    m.addListener('click', () => {
+      if (isMobile()) {
+        closeMobileList();
+        openMobileSheet(place);
+      } else {
+        openModal(place);
+      }
+    });
     m.content.addEventListener('mouseover', () => infoWindow.open(map, m));
     m.content.addEventListener('mouseout', () => infoWindow.close());
 
@@ -385,6 +414,32 @@ function closeModal(e) {
   if (!e || e.target === document.getElementById('modalOverlay') || e.type === 'click') {
     document.getElementById('modalOverlay').classList.remove('open');
   }
+}
+
+// ── Mobile Sheet Controls ───────────────────────────────────────
+function toggleMobileList() {
+  document.getElementById('mobileListSheet').classList.toggle('open');
+  document.getElementById('mobileResultBadge').style.display = 'none';
+}
+
+function closeMobileList() {
+  document.getElementById('mobileListSheet').classList.remove('open');
+  document.getElementById('mobileResultBadge').style.display = 'flex';
+}
+
+function openMobileSheet(place) {
+  const sheet = document.getElementById('mobileBottomSheet');
+  const content = document.getElementById('mobileSheetContent');
+  const card = createCard(place, 0);
+  content.innerHTML = '';
+  content.appendChild(card);
+  // 點卡片打開 Modal
+  card.onclick = () => openModal(place);
+  sheet.classList.add('open');
+}
+
+function closeMobileSheet() {
+  document.getElementById('mobileBottomSheet').classList.remove('open');
 }
 
 // ── Utils ───────────────────────────────────────────────────────
