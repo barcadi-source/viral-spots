@@ -331,37 +331,43 @@ app.get('/api/trending', async (req, res) => {
   if (cached) return res.json(cached);
 
   try {
-    // 完整 keyword 清單（移植自原版 config.py）
+    // 完整 keyword 清單（config.py 原版 + 自訂補充）
     const ALL_KEYWORDS_EN = [
       'restaurant', 'cafe', 'coffee', 'brunch', 'breakfast', 'lunch', 'dinner',
       'noodle', 'ramen', 'hotpot', 'barbecue', 'bbq', 'steak', 'burger', 'pizza',
       'sushi', 'japanese', 'korean', 'thai', 'vietnamese', 'chinese', 'taiwanese',
       'dessert', 'bakery', 'bistro', 'bar', 'izakaya', 'dim sum', 'vegetarian',
-      'vegan', 'seafood'
+      'vegan', 'seafood',
+      'pub', 'cocktail', 'wine', 'beer', 'bento', 'snack', 'takeaway',
+      'pastry', 'sandwich', 'salad', 'grill', 'buffet', 'omakase',
+      'teppanyaki', 'shabu', 'yakiniku', 'curry', 'pho', 'banh mi',
     ];
     const ALL_KEYWORDS_ZH = [
       '餐廳', '咖啡廳', '早午餐', '早餐店', '麵店', '拉麵', '火鍋', '燒肉',
       '牛排', '壽司', '日式', '韓式', '泰式', '越式', '中式', '台式',
-      '甜點', '麵包店', '酒吧', '居酒屋', '港式', '素食', '海鮮'
+      '甜點', '麵包店', '酒吧', '居酒屋', '港式', '素食', '海鮮',
+      '小吃', '便當', '外帶', '燒烤', '炸物', '丼飯', '義大利麵', '披薩',
+      '漢堡', '三明治', '鍋物', '涮涮鍋', '鐵板燒', '咖哩', '定食',
+      '創意料理', '無菜單', '餐酒館', '輕食', '下午茶', '甜品', '冰淇淋',
     ];
 
     // 各類型對應的 keyword 子集 + type
     const typeMap = {
-      restaurant:    { keywords: ['restaurant', 'bistro', 'lunch', 'dinner', '餐廳', '中式', '台式', '日式', '韓式', '泰式', '越式', '港式'], type: 'restaurant' },
-      cafe:          { keywords: ['cafe', 'coffee', 'brunch', '咖啡廳', '早午餐'], type: 'cafe' },
-      bar:           { keywords: ['bar', 'izakaya', '酒吧', '居酒屋'], type: 'bar' },
-      bakery:        { keywords: ['bakery', 'breakfast', 'dessert', '早餐店', '麵包店', '甜點'], type: 'bakery' },
-      meal_takeaway: { keywords: ['noodle', 'ramen', '麵店', '拉麵'], type: 'meal_takeaway' },
+      restaurant:    { keywords: ['restaurant', 'bistro', 'lunch', 'dinner', 'grill', 'buffet', 'omakase', 'teppanyaki', 'curry', 'shabu', 'yakiniku', '餐廳', '中式', '台式', '日式', '韓式', '泰式', '越式', '港式', '牛排', '燒肉', '丼飯', '義大利麵', '創意料理', '無菜單', '餐酒館', '鐵板燒', '定食'], type: 'restaurant' },
+      cafe:          { keywords: ['cafe', 'coffee', 'brunch', 'pastry', '咖啡廳', '早午餐', '輕食', '下午茶'], type: 'cafe' },
+      bar:           { keywords: ['bar', 'izakaya', 'pub', 'cocktail', 'wine', 'beer', '酒吧', '居酒屋', '餐酒館'], type: 'bar' },
+      bakery:        { keywords: ['bakery', 'breakfast', 'dessert', 'pastry', 'sandwich', '早餐店', '麵包店', '甜點', '甜品', '下午茶', '冰淇淋'], type: 'bakery' },
+      meal_takeaway: { keywords: ['noodle', 'ramen', 'bento', 'snack', 'takeaway', 'pho', '麵店', '拉麵', '小吃', '便當', '外帶', '炸物'], type: 'meal_takeaway' },
     };
 
-    // ── Step 1：keyword + type 搜尋 ─────────────────────────────
+    // ── Step 1：keyword 搜尋 ────────────────────────────────────
     let places = [];
     if (type === 'all') {
-      // 全部模式：用完整 keyword 清單搜尋，分批避免過多 API 呼叫
-      // 選取代表性 keyword（英文+中文各取重要的）
       const representativeKeywords = [
-        'restaurant', 'cafe', 'bar', 'bakery', 'ramen', 'hotpot', 'sushi', 'dessert',
-        '餐廳', '咖啡廳', '早午餐', '火鍋', '酒吧', '甜點', '燒肉', '早餐店'
+        'restaurant', 'cafe', 'coffee', 'brunch', 'bar', 'bakery', 'ramen',
+        'hotpot', 'sushi', 'dessert', 'bistro', 'izakaya', 'bbq', 'buffet',
+        '餐廳', '咖啡廳', '早午餐', '火鍋', '酒吧', '甜點', '燒肉', '早餐店',
+        '小吃', '麵店', '下午茶', '餐酒館', '無菜單', '丼飯'
       ];
       const searches = await Promise.all(
         representativeKeywords.map(kw =>
