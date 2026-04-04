@@ -10,7 +10,6 @@ function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 25.0330, lng: 121.5654 },
     zoom: 14,
-    styles: [],
     mapId: 'viral_spots_map',
     disableDefaultUI: false,
     zoomControl: true,
