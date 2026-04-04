@@ -250,12 +250,14 @@ function createCard(place, index) {
 // ── Sort ────────────────────────────────────────────────────────
 function sortResults(by) {
   const sorted = [...allResults].sort((a, b) => {
-    if (by === 'daily')       return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
-    if (by === 'rating')      return (b.rating || 0) - (a.rating || 0);
+    if (by === 'daily')        return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
+    if (by === 'rating')       return (b.rating || 0) - (a.rating || 0);
     if (by === 'recentRating') return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
     return 0;
   });
   renderResults(sorted);
+  clearMapMarkers();
+  renderMapMarkers(sorted);
 }
 
 // ── Map Markers ─────────────────────────────────────────────────
