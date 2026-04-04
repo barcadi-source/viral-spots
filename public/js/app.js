@@ -203,10 +203,6 @@ function createCard(place, index) {
       : `<span class="badge badge-warn">近期 ${analysis.ratingDelta}</span>`
     : '';
 
-  const photoBadge = analysis.photoCount > 0
-    ? `<span class="badge badge-ok">📷 ${analysis.photoAtMax ? '10+' : analysis.photoCount} 張</span>`
-    : '';
-
   const okBadge = '';
 
   const openTag = place.isOpen === true
@@ -226,7 +222,7 @@ function createCard(place, index) {
           ${openTag}
         </div>
         <div class="card-badges">
-          ${viralBadge}${ratingBadge}${deltaBadge}${photoBadge}
+          ${viralBadge}${ratingBadge}${deltaBadge}
         </div>
       </div>
     </div>
@@ -271,11 +267,11 @@ function clearMapMarkers() {
 }
 
 function renderMapMarkers(data) {
-  data.forEach(place => {
+  data.forEach((place, index) => {
     if (!place.lat || !place.lng) return;
-    const rate = place.analysis.estimatedDailyRate || 0;
-    const color = rate >= 2 ? '#ff3b3b' : rate >= 0.5 ? '#ff6b35' : '#888888';
-    const scale = rate >= 2 ? 10 : 7;
+
+    const isFirst = index === 0;
+    const label = isFirst ? '👑' : '';
 
     const m = new google.maps.Marker({
       position: { lat: place.lat, lng: place.lng },
@@ -283,18 +279,24 @@ function renderMapMarkers(data) {
       title: place.name,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        fillColor: color,
+        fillColor: '#ff3b3b',
         fillOpacity: 0.9,
         strokeColor: '#fff',
         strokeWeight: 1.5,
-        scale,
+        scale: 8,
       },
-      zIndex: Math.round(rate * 10)
+      label: isFirst ? {
+        text: '👑',
+        fontSize: '14px',
+        color: '#fff',
+      } : undefined,
+      zIndex: isFirst ? 999 : 1
     });
 
+    const rate = place.analysis.estimatedDailyRate || 0;
     const infoWindow = new google.maps.InfoWindow({
       content: `<div style="background:#111;color:#eee;padding:8px 10px;border-radius:3px;font-family:sans-serif;font-size:12px;min-width:140px">
-        <div style="font-weight:700;margin-bottom:3px">${place.name}</div>
+        <div style="font-weight:700;margin-bottom:3px">${isFirst ? '👑 ' : ''}${place.name}</div>
         <div style="color:#aaa">⭐ ${place.rating || 'N/A'} · 📊 ${rate} 則/天</div>
       </div>`
     });
