@@ -197,12 +197,7 @@ function createCard(place, index) {
     ? `<span class="badge badge-warn">近期 ⭐ ${analysis.recentAvgRating}</span>`
     : '';
 
-  const deltaBadge = analysis.ratingDelta !== null && Math.abs(analysis.ratingDelta) >= 0.3
-    ? analysis.ratingDelta > 0
-      ? `<span class="badge badge-ok">近期 +${analysis.ratingDelta}</span>`
-      : `<span class="badge badge-warn">近期 ${analysis.ratingDelta}</span>`
-    : '';
-
+  const deltaBadge = '';
   const okBadge = '';
 
   const openTag = place.isOpen === true
