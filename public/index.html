@@ -30,35 +30,29 @@
   <div class="controls-bar">
     <div class="controls-inner">
 
-      <!-- 第一行：定位 + 距離 + 搜尋 -->
-      <div class="controls-row1">
-        <div class="control-group">
-          <button class="btn-locate" id="btnLocate" onclick="locateMe()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity=".3"/></svg>
-            <span>定位我的位置</span>
-          </button>
-          <div class="location-display" id="locationDisplay">
-            <span class="location-text" id="locationText">尚未定位</span>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label class="ctrl-label">搜尋範圍</label>
-          <div class="radius-btns">
-            <button class="radius-btn active" data-radius="1000" onclick="setRadius(this)">1 km</button>
-            <button class="radius-btn" data-radius="3000" onclick="setRadius(this)">3 km</button>
-            <button class="radius-btn" data-radius="5000" onclick="setRadius(this)">5 km</button>
-          </div>
-        </div>
-
-        <button class="btn-search" id="btnSearch" onclick="searchTrending()" disabled>
-          <span>搜尋爆紅店家</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <!-- Location Section -->
+      <div class="control-group">
+        <button class="btn-locate" id="btnLocate" onclick="locateMe()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity=".3"/></svg>
+          <span>定位我的位置</span>
         </button>
+        <div class="location-display" id="locationDisplay">
+          <span class="location-text" id="locationText">尚未定位</span>
+        </div>
       </div>
 
-      <!-- 第二行：類型篩選 -->
-      <div class="controls-row2">
+      <!-- Radius -->
+      <div class="control-group">
+        <label class="ctrl-label">搜尋範圍</label>
+        <div class="radius-btns">
+          <button class="radius-btn active" data-radius="1000" onclick="setRadius(this)">1 km</button>
+          <button class="radius-btn" data-radius="3000" onclick="setRadius(this)">3 km</button>
+          <button class="radius-btn" data-radius="5000" onclick="setRadius(this)">5 km</button>
+        </div>
+      </div>
+
+      <!-- Type Filter -->
+      <div class="control-group">
         <label class="ctrl-label">類型篩選</label>
         <div class="type-btns">
           <button class="type-btn active" data-type="all" onclick="setType(this)">全部</button>
@@ -70,6 +64,11 @@
         </div>
       </div>
 
+      <!-- Search button -->
+      <button class="btn-search" id="btnSearch" onclick="searchTrending()" disabled>
+        <span>搜尋爆紅店家</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
     </div>
   </div>
 
@@ -92,7 +91,7 @@
         <div class="sort-group">
           <span class="sort-label">排序</span>
           <select class="sort-select" onchange="sortResults(this.value)">
-            <option value="daily">近期評論速度</option>
+            <option value="daily">每日評論速度</option>
             <option value="rating">評分</option>
             <option value="recentRating">近期平均星數</option>
           </select>
@@ -136,7 +135,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <span class="results-title" id="mobileResultsTitle">等待搜尋...</span>
       <select class="sort-select" onchange="sortResults(this.value)">
-        <option value="daily">近期評論速度</option>
+        <option value="daily">每日評論速度</option>
         <option value="rating">評分</option>
         <option value="recentRating">近期平均星數</option>
       </select>
@@ -156,7 +155,7 @@
 
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvni5rx49NZonlM2Ov93brSe9PZkzD5ps&libraries=places&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvni5rx49NZonlM2Ov93brSe9PZkzD5ps&libraries=places&callback=initMap" async defer></script&v=beta&libraries=places,marker>
 <script src="/js/app.js"></script>
 </body>
 </html>
