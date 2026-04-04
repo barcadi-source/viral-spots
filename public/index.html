@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIRAL SPOTS — 爆紅店家探測器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-main">VIRAL</span>
+        <span class="logo-sub">SPOTS</span>
+        <span class="logo-tag">爆紅店家探測器</span>
+      </div>
+      <div class="header-right">
+        <div class="pulse-dot"></div>
+        <span class="live-text">LIVE DATA</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <div class="controls-inner">
+
+      <!-- Location Section -->
+      <div class="control-group">
+        <button class="btn-locate" id="btnLocate" onclick="locateMe()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/><circle cx="12" cy="12" r="9" opacity=".3"/></svg>
+          <span>定位我的位置</span>
+        </button>
+        <div class="location-display" id="locationDisplay">
+          <span class="location-text" id="locationText">尚未定位</span>
+        </div>
+      </div>
+
+      <!-- Radius -->
+      <div class="control-group">
+        <label class="ctrl-label">搜尋範圍</label>
+        <div class="radius-btns">
+          <button class="radius-btn active" data-radius="1000" onclick="setRadius(this)">1 km</button>
+          <button class="radius-btn" data-radius="3000" onclick="setRadius(this)">3 km</button>
+          <button class="radius-btn" data-radius="5000" onclick="setRadius(this)">5 km</button>
+        </div>
+      </div>
+
+      <!-- Type Filter -->
+      <div class="control-group">
+        <label class="ctrl-label">類型篩選</label>
+        <div class="type-btns">
+          <button class="type-btn active" data-type="all" onclick="setType(this)">全部</button>
+          <button class="type-btn" data-type="restaurant" onclick="setType(this)">🍜 餐廳</button>
+          <button class="type-btn" data-type="cafe" onclick="setType(this)">☕ 咖啡廳</button>
+          <button class="type-btn" data-type="bar" onclick="setType(this)">🍺 酒吧</button>
+          <button class="type-btn" data-type="bakery" onclick="setType(this)">🥐 早餐/麵包</button>
+          <button class="type-btn" data-type="meal_takeaway" onclick="setType(this)">🥡 小吃/外帶</button>
+        </div>
+      </div>
+
+      <!-- Search button -->
+      <button class="btn-search" id="btnSearch" onclick="searchTrending()" disabled>
+        <span>搜尋爆紅店家</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+
+    <!-- Map Panel -->
+    <div class="map-panel">
+      <div id="map"></div>
+      <div class="map-tip" id="mapTip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        點擊地圖可設定搜尋中心點
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+      <div class="results-header">
+        <span class="results-title" id="resultsTitle">等待搜尋...</span>
+        <div class="sort-group">
+          <span class="sort-label">排序</span>
+          <select class="sort-select" onchange="sortResults(this.value)">
+            <option value="daily">每日評論速度</option>
+            <option value="rating">評分</option>
+            <option value="recentRating">近期平均星數</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="results" class="results-list">
+        <div class="empty-state">
+          <div class="empty-icon">🗺️</div>
+          <p>定位後搜尋，探索附近爆紅店家</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-inner">
+      <div class="loading-bars">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <p class="loading-text">正在掃描爆紅店家...</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvni5rx49NZonlM2Ov93brSe9PZkzD5ps&libraries=places&callback=initMap" async defer></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
