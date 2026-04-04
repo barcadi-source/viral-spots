@@ -226,22 +226,6 @@ function createCard(place, index) {
         </div>
       </div>
     </div>
-    <div class="card-scores">
-      <div class="score-item">
-        <div class="score-label">
-          <span>近期評論速度</span>
-          <span style="color:var(--accent)">${analysis.estimatedDailyRate} 則/天</span>
-        </div>
-        <div class="score-bar"><div class="score-fill viral" style="width:${Math.min(analysis.estimatedDailyRate / 5 * 100, 100)}%"></div></div>
-      </div>
-      <div class="score-item">
-        <div class="score-label">
-          <span>近期平均星數</span>
-          <span style="color:var(--warn)">${analysis.recentAvgRating ?? 'N/A'} ★</span>
-        </div>
-        <div class="score-bar"><div class="score-fill suspicious" style="width:${analysis.recentAvgRating ? analysis.recentAvgRating / 5 * 100 : 0}%"></div></div>
-      </div>
-    </div>
   `;
 
   return div;
