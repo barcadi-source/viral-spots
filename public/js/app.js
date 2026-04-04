@@ -10,7 +10,6 @@ function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 25.0330, lng: 121.5654 },
     zoom: 14,
-    mapId: 'viral_spots_map',
     disableDefaultUI: false,
     zoomControl: true,
     mapTypeControl: false,
@@ -27,23 +26,21 @@ function setMapCenter(lat, lng) {
   currentLat = lat;
   currentLng = lng;
 
-  // 搜尋中心點 Marker（AdvancedMarkerElement）
-  if (marker) marker.map = null;
-  const centerPin = document.createElement('div');
-  centerPin.style.cssText = `
-    width: 20px; height: 20px;
-    background: #ff3b3b;
-    border: 3px solid #fff;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(255,59,59,0.6);
-    cursor: grab;
-  `;
-  marker = new google.maps.marker.AdvancedMarkerElement({
+  if (marker) marker.setMap(null);
+  marker = new google.maps.Marker({
     position: { lat, lng },
     map,
-    content: centerPin,
+    draggable: true,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: '#ff3b3b',
+      fillOpacity: 1,
+      strokeColor: '#fff',
+      strokeWeight: 2,
+      scale: 8
+    },
     title: '搜尋中心點（可拖曳）',
-    gmpDraggable: true,
+    zIndex: 100
   });
 
   marker.addListener('dragend', e => {
@@ -263,7 +260,7 @@ function sortResults(by) {
 const placeMarkers = [];
 
 function clearMapMarkers() {
-  placeMarkers.forEach(m => m.map = null);
+  placeMarkers.forEach(m => m.setMap(null));
   placeMarkers.length = 0;
 }
 
@@ -272,23 +269,21 @@ function renderMapMarkers(data) {
     if (!place.lat || !place.lng) return;
     const rate = place.analysis.estimatedDailyRate || 0;
     const color = rate >= 2 ? '#ff3b3b' : rate >= 0.5 ? '#ff6b35' : '#888888';
-    const size  = rate >= 2 ? 16 : 12;
+    const scale = rate >= 2 ? 10 : 7;
 
-    const pin = document.createElement('div');
-    pin.style.cssText = `
-      width: ${size}px; height: ${size}px;
-      background: ${color};
-      border: 2px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 6px ${color}88;
-      cursor: pointer;
-    `;
-
-    const m = new google.maps.marker.AdvancedMarkerElement({
+    const m = new google.maps.Marker({
       position: { lat: place.lat, lng: place.lng },
       map,
-      content: pin,
       title: place.name,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: color,
+        fillOpacity: 0.9,
+        strokeColor: '#fff',
+        strokeWeight: 1.5,
+        scale,
+      },
+      zIndex: Math.round(rate * 10)
     });
 
     const infoWindow = new google.maps.InfoWindow({
@@ -306,8 +301,8 @@ function renderMapMarkers(data) {
         openModal(place);
       }
     });
-    m.content.addEventListener('mouseover', () => infoWindow.open(map, m));
-    m.content.addEventListener('mouseout', () => infoWindow.close());
+    m.addListener('mouseover', () => infoWindow.open(map, m));
+    m.addListener('mouseout', () => infoWindow.close());
 
     placeMarkers.push(m);
   });
