@@ -339,6 +339,8 @@ app.get('/api/trending', async (req, res) => {
       meal_takeaway: 'meal_takeaway',
     };
 
+    // ── Step 1：抓取基本資料（不打 Details，節省 API 額度）──────
+    // 全部模式同時搜尋 5 種類型，最多可得 100 筆
     let places = [];
     if (type === 'all') {
       const searches = await Promise.all(
@@ -361,11 +363,27 @@ app.get('/api/trending', async (req, res) => {
       places = res2.data.results || [];
     }
 
-    // 排除飯店
-    places = places.filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)));
+    // ── Step 2：用 Nearby Search 的基本資料初步篩選 ─────────────
+    // Nearby Search 已包含 rating 和 user_ratings_total，可以預篩
+    places = places
+      .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))  // 排除飯店
+      .filter(p => p.rating && p.user_ratings_total)                  // 排除無評論
+      .sort((a, b) => {
+        // 預排序：優先挑「高評分 + 評論數不太多」的店（新爆紅特徵）
+        const scoreA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01;
+        const scoreB = (b.rating || 0) * 10 + Math.min(b.user_ratings_total || 0, 500) * 0.01;
 
+        // 小店加分（總評論 < 300，可能是新爆紅）
+        const freshnessA = (a.user_ratings_total || 0) < 300 ? 5 : 0;
+        const freshnessB = (b.user_ratings_total || 0) < 300 ? 5 : 0;
+
+        return (scoreB + freshnessB) - (scoreA + freshnessA);
+      })
+      .slice(0, 20);  // 取前 20 間打 Details
+
+    // ── Step 3：打 Details API 取評論，計算完整指標 ──────────────
     const detailed = await Promise.all(
-      places.slice(0, 15).map(async place => {
+      places.map(async place => {
         try {
           const detailRes = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
             params: {
@@ -384,25 +402,25 @@ app.get('/api/trending', async (req, res) => {
           const analysis = analyzeReviews(d.reviews || [], d.user_ratings_total || 0, d.rating || 0, photoCount);
 
           return {
-            place_id:   place.place_id,
-            name:       d.name,
-            rating:     d.rating,
+            place_id:     place.place_id,
+            name:         d.name,
+            rating:       d.rating,
             totalRatings: d.user_ratings_total,
-            address:    d.formatted_address,
-            priceLevel: d.price_level,
-            types:      d.types,
-            lat:        d.geometry?.location?.lat,
-            lng:        d.geometry?.location?.lng,
-            photoRef:   d.photos?.[0]?.photo_reference || null,
+            address:      d.formatted_address,
+            priceLevel:   d.price_level,
+            types:        d.types,
+            lat:          d.geometry?.location?.lat,
+            lng:          d.geometry?.location?.lng,
+            photoRef:     d.photos?.[0]?.photo_reference || null,
             photoCount,
-            isOpen:     d.opening_hours?.open_now,
+            isOpen:       d.opening_hours?.open_now,
             analysis,
           };
         } catch { return null; }
       })
     );
 
-    // 排序：promotion score 優先，trend score 次之
+    // ── Step 4：最終排序（promotionSignal 優先）──────────────────
     const result = detailed
       .filter(Boolean)
       .sort((a, b) =>
