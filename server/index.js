@@ -399,11 +399,27 @@ app.get('/api/trending', async (req, res) => {
       });
     }
 
-    // ── Step 2：用 Nearby Search 的基本資料初步篩選 ─────────────
-    // Nearby Search 已包含 rating 和 user_ratings_total，可以預篩
+    // ── Step 2：篩選 ─────────────────────────────────────────────
+    const toRad = d => d * Math.PI / 180;
+    const distanceKm = (lat1, lng1, lat2, lng2) => {
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat/2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
+    const radiusKm = radius / 1000;
+
     places = places
-      .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))  // 排除飯店
-      .filter(p => p.rating && p.user_ratings_total)                  // 排除無評論
+      .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))
+      .filter(p => p.rating && p.user_ratings_total)
+      .filter(p => {
+        const pLat = p.geometry?.location?.lat;
+        const pLng = p.geometry?.location?.lng;
+        if (!pLat || !pLng) return false;
+        return distanceKm(parseFloat(lat), parseFloat(lng), pLat, pLng) <= radiusKm;
+      })
       .sort((a, b) => {
         // 預排序：優先挑「高評分 + 評論數不太多」的店（新爆紅特徵）
         const scoreA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01;
