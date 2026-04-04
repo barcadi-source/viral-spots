@@ -414,6 +414,7 @@ app.get('/api/trending', async (req, res) => {
     places = places
       .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))
       .filter(p => p.rating && p.user_ratings_total)
+      .filter(p => (p.user_ratings_total || 0) >= 5)
       .filter(p => {
         const pLat = p.geometry?.location?.lat;
         const pLng = p.geometry?.location?.lng;
