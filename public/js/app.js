@@ -64,6 +64,7 @@ function setMapCenter(lat, lng) {
     strokeColor: '#ff3b3b',
     strokeOpacity: 0.4,
     strokeWeight: 1,
+    clickable: false,
   });
 
   map.panTo({ lat, lng });
