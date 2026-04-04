@@ -331,22 +331,42 @@ app.get('/api/trending', async (req, res) => {
   if (cached) return res.json(cached);
 
   try {
+    // 完整 keyword 清單（移植自原版 config.py）
+    const ALL_KEYWORDS_EN = [
+      'restaurant', 'cafe', 'coffee', 'brunch', 'breakfast', 'lunch', 'dinner',
+      'noodle', 'ramen', 'hotpot', 'barbecue', 'bbq', 'steak', 'burger', 'pizza',
+      'sushi', 'japanese', 'korean', 'thai', 'vietnamese', 'chinese', 'taiwanese',
+      'dessert', 'bakery', 'bistro', 'bar', 'izakaya', 'dim sum', 'vegetarian',
+      'vegan', 'seafood'
+    ];
+    const ALL_KEYWORDS_ZH = [
+      '餐廳', '咖啡廳', '早午餐', '早餐店', '麵店', '拉麵', '火鍋', '燒肉',
+      '牛排', '壽司', '日式', '韓式', '泰式', '越式', '中式', '台式',
+      '甜點', '麵包店', '酒吧', '居酒屋', '港式', '素食', '海鮮'
+    ];
+
+    // 各類型對應的 keyword 子集 + type
     const typeMap = {
-      restaurant:    'restaurant',
-      cafe:          'cafe',
-      bar:           'bar',
-      bakery:        'bakery',
-      meal_takeaway: 'meal_takeaway',
+      restaurant:    { keywords: ['restaurant', 'bistro', 'lunch', 'dinner', '餐廳', '中式', '台式', '日式', '韓式', '泰式', '越式', '港式'], type: 'restaurant' },
+      cafe:          { keywords: ['cafe', 'coffee', 'brunch', '咖啡廳', '早午餐'], type: 'cafe' },
+      bar:           { keywords: ['bar', 'izakaya', '酒吧', '居酒屋'], type: 'bar' },
+      bakery:        { keywords: ['bakery', 'breakfast', 'dessert', '早餐店', '麵包店', '甜點'], type: 'bakery' },
+      meal_takeaway: { keywords: ['noodle', 'ramen', '麵店', '拉麵'], type: 'meal_takeaway' },
     };
 
-    // ── Step 1：抓取基本資料（不打 Details，節省 API 額度）──────
-    // 全部模式同時搜尋 5 種類型，最多可得 100 筆
+    // ── Step 1：keyword + type 搜尋 ─────────────────────────────
     let places = [];
     if (type === 'all') {
+      // 全部模式：用完整 keyword 清單搜尋，分批避免過多 API 呼叫
+      // 選取代表性 keyword（英文+中文各取重要的）
+      const representativeKeywords = [
+        'restaurant', 'cafe', 'bar', 'bakery', 'ramen', 'hotpot', 'sushi', 'dessert',
+        '餐廳', '咖啡廳', '早午餐', '火鍋', '酒吧', '甜點', '燒肉', '早餐店'
+      ];
       const searches = await Promise.all(
-        ['restaurant', 'cafe', 'bar', 'meal_takeaway', 'bakery'].map(t =>
+        representativeKeywords.map(kw =>
           axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
-            params: { location: `${lat},${lng}`, radius, type: t, key: GOOGLE_API_KEY, language: 'zh-TW' }
+            params: { location: `${lat},${lng}`, radius, keyword: kw, key: GOOGLE_API_KEY, language: 'zh-TW' }
           })
         )
       );
@@ -357,10 +377,20 @@ app.get('/api/trending', async (req, res) => {
         });
       });
     } else {
-      const res2 = await axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
-        params: { location: `${lat},${lng}`, radius, type: typeMap[type] || 'restaurant', key: GOOGLE_API_KEY, language: 'zh-TW' }
+      const { keywords, type: t } = typeMap[type] || typeMap.restaurant;
+      const searches = await Promise.all(
+        keywords.map(kw =>
+          axios.get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', {
+            params: { location: `${lat},${lng}`, radius, keyword: kw, type: t, key: GOOGLE_API_KEY, language: 'zh-TW' }
+          })
+        )
+      );
+      const seen = new Set();
+      searches.forEach(r => {
+        (r.data.results || []).forEach(p => {
+          if (!seen.has(p.place_id)) { seen.add(p.place_id); places.push(p); }
+        });
       });
-      places = res2.data.results || [];
     }
 
     // ── Step 2：用 Nearby Search 的基本資料初步篩選 ─────────────
