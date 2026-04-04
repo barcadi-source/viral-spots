@@ -537,6 +537,11 @@ body {
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
+/* controls-row1/2 桌面版：inline flex（不換行）*/
+.controls-row1, .controls-row2 {
+  display: contents; /* 桌面版讓子元素直接參與父層 flex */
+}
+
 @media (max-width: 768px) {
   /* 地圖全屏 */
   .main-layout {
@@ -571,7 +576,7 @@ body {
   .controls-row2 {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     width: 100%;
   }
 
@@ -587,19 +592,17 @@ body {
   .btn-locate span { display: none; }
 
   .radius-btns { display: flex; gap: 3px; }
-  .radius-btn {
-    font-size: 11px;
-    padding: 5px 8px;
-  }
+  .radius-btn { font-size: 11px; padding: 5px 8px; }
 
   .type-btns { display: flex; gap: 3px; flex: 1; }
   .type-btn {
-    font-size: 11px;
-    padding: 5px 6px;
+    font-size: 10px;
+    padding: 5px 4px;
     flex: 1;
     text-align: center;
   }
 
+  /* 手機版搜尋按鈕：顯示「搜尋」文字，隱藏放大鏡 */
   .btn-search {
     font-size: 11px;
     padding: 5px 10px;
@@ -607,7 +610,8 @@ body {
     flex-shrink: 0;
     white-space: nowrap;
   }
-  .btn-search span { display: none; }
+  .btn-search svg { display: none; }
+  .btn-search span { display: inline; }
 
   /* Modal 全寬 */
   .modal { width: 100vw; max-height: 90vh; border-radius: 16px 16px 0 0; margin-top: auto; }

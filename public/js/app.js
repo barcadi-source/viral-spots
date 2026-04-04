@@ -27,18 +27,21 @@ function setMapCenter(lat, lng) {
   currentLng = lng;
 
   if (marker) marker.setMap(null);
+  // 大頭針 SVG（與店家紅點區分）
+  const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+    <path d="M16 0C9.373 0 4 5.373 4 12c0 9 12 28 12 28S28 21 28 12C28 5.373 22.627 0 16 0z" fill="#00e5ff" stroke="#fff" stroke-width="2"/>
+    <circle cx="16" cy="12" r="5" fill="#fff"/>
+  </svg>`;
+  const markerIcon = {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(pinSvg),
+    scaledSize: new google.maps.Size(32, 40),
+    anchor: new google.maps.Point(16, 40),
+  };
   marker = new google.maps.Marker({
     position: { lat, lng },
     map,
     draggable: true,
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: '#ff3b3b',
-      fillOpacity: 1,
-      strokeColor: '#fff',
-      strokeWeight: 2,
-      scale: 8
-    },
+    icon: markerIcon,
     title: '搜尋中心點（可拖曳）',
     zIndex: 100
   });
