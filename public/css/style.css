@@ -542,7 +542,7 @@ body {
   .main-layout {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
-    height: calc(100vh - 52px - 57px);
+    height: calc(100vh - 52px - 90px);
   }
 
   /* 隱藏右側列表面板 */
@@ -551,66 +551,118 @@ body {
   /* 地圖佔滿 */
   .map-panel { height: 100%; }
 
-  /* 控制列縮小 */
-  .controls-inner { gap: 8px; flex-wrap: nowrap; overflow-x: auto; }
-  .ctrl-label { display: none; }
-  .location-display { max-width: 120px; font-size: 11px; }
-  .btn-search { font-size: 12px; padding: 6px 12px; }
-  .radius-btn, .type-btn { font-size: 11px; padding: 4px 8px; }
-
-  /* 底部滑出卡片（Bottom Sheet）*/
-  .mobile-bottom-sheet {
-    display: block;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--bg2);
-    border-top: 2px solid var(--accent);
-    border-radius: 16px 16px 0 0;
-    padding: 16px;
-    z-index: 200;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-  .mobile-bottom-sheet.open {
-    transform: translateY(0);
-  }
-  .mobile-sheet-handle {
-    width: 40px; height: 4px;
-    background: var(--border2);
-    border-radius: 2px;
-    margin: 0 auto 16px;
-  }
-  .mobile-sheet-close {
-    position: absolute; top: 14px; right: 16px;
-    background: none; border: none;
-    color: var(--text2); font-size: 18px;
-    cursor: pointer;
-  }
-
-  /* 搜尋結果數量浮標 */
-  .mobile-result-badge {
+  /* 控制列分兩行 */
+  .controls-bar { padding: 6px 12px; }
+  .controls-inner {
     display: flex;
-    position: fixed;
-    bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--accent);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    z-index: 150;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(255,59,59,0.4);
+    flex-direction: column;
     gap: 6px;
+  }
+
+  /* 第一行：定位 + 距離 + 搜尋按鈕 */
+  .controls-row1 {
+    display: flex;
     align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  /* 第二行：類型篩選 */
+  .controls-row2 {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .ctrl-label { display: none; }
+  .location-display { display: none; }
+
+  .btn-locate {
+    font-size: 11px;
+    padding: 5px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-locate span { display: none; }
+
+  .radius-btns { display: flex; gap: 3px; }
+  .radius-btn {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .type-btns { display: flex; gap: 3px; flex: 1; }
+  .type-btn {
+    font-size: 11px;
+    padding: 5px 6px;
+    flex: 1;
+    text-align: center;
+  }
+
+  .btn-search {
+    font-size: 11px;
+    padding: 5px 10px;
+    margin-left: auto;
+    flex-shrink: 0;
     white-space: nowrap;
   }
+  .btn-search span { display: none; }
 
   /* Modal 全寬 */
   .modal { width: 100vw; max-height: 90vh; border-radius: 16px 16px 0 0; margin-top: auto; }
   .modal-overlay { align-items: flex-end; }
+}
+
+/* ── Mobile Bottom Sheet & Badge（全域，不限 media）──────────── */
+.mobile-bottom-sheet {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 2px solid var(--accent);
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  z-index: 200;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.mobile-bottom-sheet.open { transform: translateY(0); }
+.mobile-sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+  cursor: pointer;
+}
+.mobile-sheet-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none;
+  color: var(--text2); font-size: 18px;
+  cursor: pointer;
+}
+.mobile-result-badge {
+  display: none;
+  position: fixed;
+  bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 150;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255,59,59,0.4);
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-sheet { display: block; }
 }
 
 /* 桌面版隱藏手機元件 */
