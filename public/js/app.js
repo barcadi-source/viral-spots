@@ -8,9 +8,10 @@ let allResults = [];
 // ── Map Init ───────────────────────────────────────────────────
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 25.0330, lng: 121.5654 }, // Taipei default
+    center: { lat: 25.0330, lng: 121.5654 },
     zoom: 14,
     styles: [],
+    mapId: 'viral_spots_map',
     disableDefaultUI: false,
     zoomControl: true,
     mapTypeControl: false,
@@ -27,22 +28,23 @@ function setMapCenter(lat, lng) {
   currentLat = lat;
   currentLng = lng;
 
-  // Marker
-  if (marker) marker.setMap(null);
-  marker = new google.maps.Marker({
+  // 搜尋中心點 Marker（AdvancedMarkerElement）
+  if (marker) marker.map = null;
+  const centerPin = document.createElement('div');
+  centerPin.style.cssText = `
+    width: 20px; height: 20px;
+    background: #ff3b3b;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255,59,59,0.6);
+    cursor: grab;
+  `;
+  marker = new google.maps.marker.AdvancedMarkerElement({
     position: { lat, lng },
     map,
-    draggable: true,
-    icon: {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: '#ff3b3b',
-      fillOpacity: 1,
-      strokeColor: '#fff',
-      strokeWeight: 2,
-      scale: 8
-    },
+    content: centerPin,
     title: '搜尋中心點（可拖曳）',
-    zIndex: 100
+    gmpDraggable: true,
   });
 
   marker.addListener('dragend', e => {
@@ -240,41 +242,44 @@ function sortResults(by) {
 const placeMarkers = [];
 
 function clearMapMarkers() {
-  placeMarkers.forEach(m => m.setMap(null));
+  placeMarkers.forEach(m => m.map = null);
   placeMarkers.length = 0;
 }
 
 function renderMapMarkers(data) {
   data.forEach(place => {
     if (!place.lat || !place.lng) return;
-    const score = place.analysis.viralScore;
-    const color = score >= 60 ? '#ff3b3b' : score >= 30 ? '#ff6b35' : '#888';
+    const rate = place.analysis.estimatedDailyRate || 0;
+    const color = rate >= 2 ? '#ff3b3b' : rate >= 0.5 ? '#ff6b35' : '#888888';
+    const size  = rate >= 2 ? 16 : 12;
 
-    const m = new google.maps.Marker({
+    const pin = document.createElement('div');
+    pin.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      background: ${color};
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 6px ${color}88;
+      cursor: pointer;
+    `;
+
+    const m = new google.maps.marker.AdvancedMarkerElement({
       position: { lat: place.lat, lng: place.lng },
       map,
+      content: pin,
       title: place.name,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        fillColor: color,
-        fillOpacity: 0.9,
-        strokeColor: '#fff',
-        strokeWeight: 1.5,
-        scale: score >= 60 ? 10 : 7
-      },
-      zIndex: score
     });
 
     const infoWindow = new google.maps.InfoWindow({
       content: `<div style="background:#111;color:#eee;padding:8px 10px;border-radius:3px;font-family:sans-serif;font-size:12px;min-width:140px">
         <div style="font-weight:700;margin-bottom:3px">${place.name}</div>
-        <div style="color:#aaa">⭐ ${place.rating || 'N/A'} · 🔥 ${place.analysis.viralScore}</div>
+        <div style="color:#aaa">⭐ ${place.rating || 'N/A'} · 📊 ${rate} 則/天</div>
       </div>`
     });
 
     m.addListener('click', () => openModal(place));
-    m.addListener('mouseover', () => infoWindow.open(map, m));
-    m.addListener('mouseout', () => infoWindow.close());
+    m.content.addEventListener('mouseover', () => infoWindow.open(map, m));
+    m.content.addEventListener('mouseout', () => infoWindow.close());
 
     placeMarkers.push(m);
   });
