@@ -8,7 +8,7 @@ const path = require('path');
 const app = express();
 const cache = new NodeCache({ stdTTL: 600 });
 const PORT = process.env.PORT || 3000;
-const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY_backend || process.env.GOOGLE_PLACES_API_KEY || '';
 
 app.use(cors());
 app.use(express.json());
@@ -321,6 +321,12 @@ function analyzeReviews(reviews = [], totalRatings = 0, rating = 0, photoCount =
 // Routes
 // ════════════════════════════════════════════════════════════════
 const EXCLUDE_TYPES = ['lodging', 'hotel', 'motel', 'resort_hotel'];
+
+// 提供前端 Maps API Key（從環境變數讀取，不硬寫在 HTML）
+app.get('/api/maps-key', (req, res) => {
+  const mapsKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || '';
+  res.json({ key: mapsKey });
+});
 
 app.get('/api/trending', async (req, res) => {
   const { lat, lng, radius = 2000, type = 'all' } = req.query;

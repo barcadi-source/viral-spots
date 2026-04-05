@@ -161,9 +161,20 @@
 
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=REPLACE_WITH_YOUR_KEY_FOR_MAPS&libraries=places&callback=initMap" async defer></script>
 <script src="/js/app.js"></script>
 <script>
+  // 從後端取得 Maps API Key，動態載入地圖
+  fetch('/api/maps-key')
+    .then(r => r.json())
+    .then(({ key }) => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    });
+
+  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
       .then(() => console.log('Service Worker 已註冊'))
