@@ -1,0 +1,22 @@
+{
+  "name": "VIRAL SPOTS — 爆紅店家探測器",
+  "short_name": "VIRAL SPOTS",
+  "description": "找出 Google Maps 評論聲量暴增的餐廳、咖啡廳、酒吧",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#ff3b3b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

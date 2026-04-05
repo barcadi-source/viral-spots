@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VIRAL SPOTS — 爆紅店家探測器</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff3b3b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VIRAL SPOTS">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
@@ -155,7 +161,14 @@
 
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvni5rx49NZonlM2Ov93brSe9PZkzD5ps&libraries=places&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=REPLACE_WITH_YOUR_KEY_FOR_MAPS&libraries=places&callback=initMap" async defer></script>
 <script src="/js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(() => console.log('Service Worker 已註冊'))
+      .catch(err => console.error('Service Worker 註冊失敗', err));
+  }
+</script>
 </body>
 </html>
