@@ -589,7 +589,8 @@ body {
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .btn-locate span { display: none; }
+  .btn-locate span { display: inline; }
+  .btn-locate svg { display: none; }
 
   .radius-btns { display: flex; gap: 3px; }
   .radius-btn { font-size: 11px; padding: 5px 8px; }
