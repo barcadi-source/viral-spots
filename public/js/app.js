@@ -338,6 +338,18 @@ async function openModal(place) {
         <span style="color:var(--text2);font-size:12px">${(place.totalRatings || 0).toLocaleString()} 則評論</span>
         ${place.priceLevel ? '<span style="color:var(--text2)">' + '💰'.repeat(place.priceLevel) + '</span>' : ''}
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&destination_place_id=${place.place_id}"
+           target="_blank"
+           style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--accent);color:white;padding:10px;border-radius:4px;text-decoration:none;font-weight:700;font-size:14px">
+          🗺️ Google Maps 導航
+        </a>
+        <a href="https://maps.apple.com/?daddr=${place.lat},${place.lng}&dirflg=d"
+           target="_blank"
+           style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bg3);color:var(--text);padding:10px;border-radius:4px;text-decoration:none;font-weight:700;font-size:14px;border:1px solid var(--border2)">
+          🍎 Apple Maps
+        </a>
+      </div>
       <div class="modal-address">📍 ${place.address || '地址不詳'}</div>
 
       <div class="analysis-section">
