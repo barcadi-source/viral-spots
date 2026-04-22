@@ -329,10 +329,10 @@ app.get('/api/maps-key', (req, res) => {
 });
 
 app.get('/api/trending', async (req, res) => {
-  const { lat, lng, radius = 2000, type = 'all' } = req.query;
+  const { lat, lng, radius = 2000, type = 'all', mode = 'viral' } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
 
-  const cacheKey = `trending_${lat}_${lng}_${radius}_${type}`;
+  const cacheKey = `trending_${lat}_${lng}_${radius}_${type}_${mode}`;
   const cached = cache.get(cacheKey);
   if (cached) return res.json(cached);
 
@@ -428,17 +428,27 @@ app.get('/api/trending', async (req, res) => {
         return distanceKm(parseFloat(lat), parseFloat(lng), pLat, pLng) <= radiusKm;
       })
       .sort((a, b) => {
-        // 預排序：優先挑「高評分 + 評論數不太多」的店（新爆紅特徵）
-        const scoreA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01;
-        const scoreB = (b.rating || 0) * 10 + Math.min(b.user_ratings_total || 0, 500) * 0.01;
-
-        // 小店加分（總評論 < 300，可能是新爆紅）
-        const freshnessA = (a.user_ratings_total || 0) < 300 ? 5 : 0;
-        const freshnessB = (b.user_ratings_total || 0) < 300 ? 5 : 0;
-
-        return (scoreB + freshnessB) - (scoreA + freshnessA);
+        // 🔥 評論速度模式：優先小店+高評分（爆紅特徵）
+        if (mode === 'viral') {
+          const scoreA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01;
+          const scoreB = (b.rating || 0) * 10 + Math.min(b.user_ratings_total || 0, 500) * 0.01;
+          const freshnessA = (a.user_ratings_total || 0) < 300 ? 5 : 0;
+          const freshnessB = (b.user_ratings_total || 0) < 300 ? 5 : 0;
+          return (scoreB + freshnessB) - (scoreA + freshnessA);
+        }
+        // 🏆 附近最高分 / ⭐ 近期平均星數：廣撒網，純粹依評分排序
+        if (mode === 'topRated' || mode === 'recentRating') {
+          return (b.rating || 0) - (a.rating || 0);
+        }
+        // 📈 穩定成長：優先老店（>500則）+ 高評分
+        if (mode === 'steady') {
+          const isOldA = (a.user_ratings_total || 0) > 500 ? 10 : 0;
+          const isOldB = (b.user_ratings_total || 0) > 500 ? 10 : 0;
+          return ((b.rating || 0) * 5 + isOldB) - ((a.rating || 0) * 5 + isOldA);
+        }
+        return 0;
       })
-      .slice(0, 20);  // 取前 20 間打 Details
+      .slice(0, 20);
 
     // ── Step 3：打 Details API 取評論，計算完整指標 ──────────────
     const detailed = await Promise.all(
@@ -479,13 +489,20 @@ app.get('/api/trending', async (req, res) => {
       })
     );
 
-    // ── Step 4：最終排序（promotionSignal 優先）──────────────────
+    // ── Step 4：最終排序（依 mode）───────────────────────────────
     const result = detailed
       .filter(Boolean)
-      .sort((a, b) =>
-        (b.analysis.promotionSignalScore * 0.6 + b.analysis.trendScore * 0.4) -
-        (a.analysis.promotionSignalScore * 0.6 + a.analysis.trendScore * 0.4)
-      );
+      .sort((a, b) => {
+        if (mode === 'viral')
+          return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
+        if (mode === 'topRated')
+          return (b.rating || 0) - (a.rating || 0);
+        if (mode === 'recentRating')
+          return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
+        if (mode === 'steady')
+          return (b.analysis.trendScore || 0) - (a.analysis.trendScore || 0);
+        return 0;
+      });
 
     cache.set(cacheKey, result);
     res.json(result);

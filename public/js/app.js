@@ -3,6 +3,7 @@ let map, marker, searchCircle;
 let currentLat = null, currentLng = null;
 let currentRadius = 1000;
 let currentType = 'all';
+let currentMode = 'viral';
 let allResults = [];
 
 // ── Map Init ───────────────────────────────────────────────────
@@ -109,6 +110,13 @@ function setType(el) {
   currentType = el.dataset.type;
 }
 
+// ── Mode ────────────────────────────────────────────────────────
+function setMode(el) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentMode = el.dataset.mode;
+}
+
 // ── Mobile detection ────────────────────────────────────────────
 const isMobile = () => window.innerWidth <= 768;
 
@@ -120,11 +128,9 @@ async function searchTrending() {
   clearMapMarkers();
 
   try {
-    const res = await fetch(`/api/trending?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&type=${currentType}`);
+    const res = await fetch(`/api/trending?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&type=${currentType}&mode=${currentMode}`);
     if (!res.ok) throw new Error(await res.text());
     allResults = await res.json();
-    // 預設依近期評論速度排序
-    allResults.sort((a, b) => (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0));
     renderResults(allResults);
     renderMapMarkers(allResults);
 

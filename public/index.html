@@ -95,12 +95,13 @@
       <div class="results-header">
         <span class="results-title" id="resultsTitle">等待搜尋...</span>
         <div class="sort-group">
-          <span class="sort-label">排序</span>
-          <select class="sort-select" onchange="sortResults(this.value)">
-            <option value="daily">近期評論速度</option>
-            <option value="rating">評分</option>
-            <option value="recentRating">近期平均星數</option>
-          </select>
+          <span class="sort-label">模式</span>
+          <div class="mode-btns">
+            <button class="mode-btn active" data-mode="viral" onclick="setMode(this)">🔥 爆紅</button>
+            <button class="mode-btn" data-mode="topRated" onclick="setMode(this)">🏆 最高分</button>
+            <button class="mode-btn" data-mode="recentRating" onclick="setMode(this)">⭐ 近期星數</button>
+            <button class="mode-btn" data-mode="steady" onclick="setMode(this)">📈 穩定成長</button>
+          </div>
         </div>
       </div>
 
@@ -140,11 +141,12 @@
     <button class="mobile-sheet-close" onclick="closeMobileList()">✕</button>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <span class="results-title" id="mobileResultsTitle">等待搜尋...</span>
-      <select class="sort-select" onchange="sortResults(this.value)">
-        <option value="daily">近期評論速度</option>
-        <option value="rating">評分</option>
-        <option value="recentRating">近期平均星數</option>
-      </select>
+      <div class="mode-btns">
+        <button class="mode-btn active" data-mode="viral" onclick="setMode(this)">🔥 爆紅</button>
+        <button class="mode-btn" data-mode="topRated" onclick="setMode(this)">🏆 最高分</button>
+        <button class="mode-btn" data-mode="recentRating" onclick="setMode(this)">⭐ 近期星數</button>
+        <button class="mode-btn" data-mode="steady" onclick="setMode(this)">📈 穩定成長</button>
+      </div>
     </div>
     <div id="mobileResults" class="results-list" style="max-height:60vh;overflow-y:auto"></div>
   </div>
