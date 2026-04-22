@@ -329,10 +329,10 @@ app.get('/api/maps-key', (req, res) => {
 });
 
 app.get('/api/trending', async (req, res) => {
-  const { lat, lng, radius = 2000, type = 'all', mode = 'viral' } = req.query;
+  const { lat, lng, radius = 2000, type = 'all' } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
 
-  const cacheKey = `trending_${lat}_${lng}_${radius}_${type}_${mode}`;
+  const cacheKey = `trending_${lat}_${lng}_${radius}_${type}`;
   const cached = cache.get(cacheKey);
   if (cached) return res.json(cached);
 
@@ -405,7 +405,7 @@ app.get('/api/trending', async (req, res) => {
       });
     }
 
-    // ── Step 2：篩選 ─────────────────────────────────────────────
+    // ── Step 2：基本過濾 + 距離限制 ─────────────────────────────
     const toRad = d => d * Math.PI / 180;
     const distanceKm = (lat1, lng1, lat2, lng2) => {
       const R = 6371;
@@ -417,7 +417,7 @@ app.get('/api/trending', async (req, res) => {
     };
     const radiusKm = radius / 1000;
 
-    places = places
+    const basePlaces = places
       .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))
       .filter(p => p.rating && p.user_ratings_total)
       .filter(p => (p.user_ratings_total || 0) >= 5)
@@ -426,33 +426,42 @@ app.get('/api/trending', async (req, res) => {
         const pLng = p.geometry?.location?.lng;
         if (!pLat || !pLng) return false;
         return distanceKm(parseFloat(lat), parseFloat(lng), pLat, pLng) <= radiusKm;
-      })
-      .sort((a, b) => {
-        // 🔥 評論速度模式：優先小店+高評分（爆紅特徵）
-        if (mode === 'viral') {
-          const scoreA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01;
-          const scoreB = (b.rating || 0) * 10 + Math.min(b.user_ratings_total || 0, 500) * 0.01;
-          const freshnessA = (a.user_ratings_total || 0) < 300 ? 5 : 0;
-          const freshnessB = (b.user_ratings_total || 0) < 300 ? 5 : 0;
-          return (scoreB + freshnessB) - (scoreA + freshnessA);
+      });
+
+    // ── Step 3：四種模式各自預篩選，合併去重取前 30 間 ──────────
+    const pickByMode = (places, modeKey, limit = 20) => {
+      const sorted = [...places].sort((a, b) => {
+        if (modeKey === 'viral') {
+          const sA = (a.rating || 0) * 10 + Math.min(a.user_ratings_total || 0, 500) * 0.01 + ((a.user_ratings_total || 0) < 300 ? 5 : 0);
+          const sB = (b.rating || 0) * 10 + Math.min(b.user_ratings_total || 0, 500) * 0.01 + ((b.user_ratings_total || 0) < 300 ? 5 : 0);
+          return sB - sA;
         }
-        // 🏆 附近最高分 / ⭐ 近期平均星數：廣撒網，純粹依評分排序
-        if (mode === 'topRated' || mode === 'recentRating') {
+        if (modeKey === 'topRated' || modeKey === 'recentRating') {
           return (b.rating || 0) - (a.rating || 0);
         }
-        // 📈 穩定成長：優先老店（>500則）+ 高評分
-        if (mode === 'steady') {
+        if (modeKey === 'steady') {
           const isOldA = (a.user_ratings_total || 0) > 500 ? 10 : 0;
           const isOldB = (b.user_ratings_total || 0) > 500 ? 10 : 0;
           return ((b.rating || 0) * 5 + isOldB) - ((a.rating || 0) * 5 + isOldA);
         }
         return 0;
-      })
-      .slice(0, 20);
+      });
+      return sorted.slice(0, limit).map(p => p.place_id);
+    };
 
-    // ── Step 3：打 Details API 取評論，計算完整指標 ──────────────
+    // 各模式選出的 place_id
+    const viralIds      = new Set(pickByMode(basePlaces, 'viral'));
+    const topRatedIds   = new Set(pickByMode(basePlaces, 'topRated'));
+    const recentIds     = new Set(pickByMode(basePlaces, 'recentRating'));
+    const steadyIds     = new Set(pickByMode(basePlaces, 'steady'));
+
+    // 合併所有需要的 place_id（去重）
+    const allIds = new Set([...viralIds, ...topRatedIds, ...recentIds, ...steadyIds]);
+    const placesToFetch = basePlaces.filter(p => allIds.has(p.place_id));
+
+    // ── Step 4：打 Details API ────────────────────────────────────
     const detailed = await Promise.all(
-      places.map(async place => {
+      placesToFetch.map(async place => {
         try {
           const detailRes = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
             params: {
@@ -489,20 +498,36 @@ app.get('/api/trending', async (req, res) => {
       })
     );
 
-    // ── Step 4：最終排序（依 mode）───────────────────────────────
-    const result = detailed
-      .filter(Boolean)
-      .sort((a, b) => {
-        if (mode === 'viral')
-          return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
-        if (mode === 'topRated')
-          return (b.rating || 0) - (a.rating || 0);
-        if (mode === 'recentRating')
-          return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
-        if (mode === 'steady')
-          return (b.analysis.trendScore || 0) - (a.analysis.trendScore || 0);
-        return 0;
-      });
+    const allDetailed = detailed.filter(Boolean);
+
+    // ── Step 5：四種模式各自排序 ─────────────────────────────────
+    const sortByMode = (data, modeKey) => {
+      const ids = modeKey === 'viral' ? viralIds
+                : modeKey === 'topRated' ? topRatedIds
+                : modeKey === 'recentRating' ? recentIds
+                : steadyIds;
+
+      return data
+        .filter(p => ids.has(p.place_id))
+        .sort((a, b) => {
+          if (modeKey === 'viral')
+            return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
+          if (modeKey === 'topRated')
+            return (b.rating || 0) - (a.rating || 0);
+          if (modeKey === 'recentRating')
+            return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
+          if (modeKey === 'steady')
+            return (b.analysis.trendScore || 0) - (a.analysis.trendScore || 0);
+          return 0;
+        });
+    };
+
+    const result = {
+      viral:        sortByMode(allDetailed, 'viral'),
+      topRated:     sortByMode(allDetailed, 'topRated'),
+      recentRating: sortByMode(allDetailed, 'recentRating'),
+      steady:       sortByMode(allDetailed, 'steady'),
+    };
 
     cache.set(cacheKey, result);
     res.json(result);

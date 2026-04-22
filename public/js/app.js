@@ -4,7 +4,7 @@ let currentLat = null, currentLng = null;
 let currentRadius = 1000;
 let currentType = 'all';
 let currentMode = 'viral';
-let allResults = [];
+let allResults = {};  // { viral: [], topRated: [], recentRating: [], steady: [] }
 
 // ── Map Init ───────────────────────────────────────────────────
 function initMap() {
@@ -115,6 +115,17 @@ function setMode(el) {
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   currentMode = el.dataset.mode;
+
+  // 如果已有搜尋結果，立即切換顯示
+  if (allResults[currentMode]) {
+    const data = allResults[currentMode];
+    renderResults(data);
+    clearMapMarkers();
+    renderMapMarkers(data);
+    if (isMobile()) {
+      document.getElementById('mobileResultCount').textContent = `📍 ${data.length} 間店家`;
+    }
+  }
 }
 
 // ── Mobile detection ────────────────────────────────────────────
@@ -128,17 +139,19 @@ async function searchTrending() {
   clearMapMarkers();
 
   try {
-    const res = await fetch(`/api/trending?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&type=${currentType}&mode=${currentMode}`);
+    const res = await fetch(`/api/trending?lat=${currentLat}&lng=${currentLng}&radius=${currentRadius}&type=${currentType}`);
     if (!res.ok) throw new Error(await res.text());
-    allResults = await res.json();
-    renderResults(allResults);
-    renderMapMarkers(allResults);
+    allResults = await res.json();  // { viral, topRated, recentRating, steady }
+
+    const data = allResults[currentMode] || allResults.viral || [];
+    renderResults(data);
+    renderMapMarkers(data);
 
     // 手機版：顯示浮標
     if (isMobile()) {
       const badge = document.getElementById('mobileResultBadge');
       badge.style.display = 'flex';
-      document.getElementById('mobileResultCount').textContent = `📍 ${allResults.length} 間店家`;
+      document.getElementById('mobileResultCount').textContent = `📍 ${data.length} 間店家`;
     }
   } catch (e) {
     document.getElementById('results').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>搜尋失敗：${e.message}</p></div>`;
@@ -232,17 +245,9 @@ function createCard(place, index) {
   return div;
 }
 
-// ── Sort ────────────────────────────────────────────────────────
+// ── Sort（已由 mode 取代，保留相容性）──────────────────────────
 function sortResults(by) {
-  const sorted = [...allResults].sort((a, b) => {
-    if (by === 'daily')        return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
-    if (by === 'rating')       return (b.rating || 0) - (a.rating || 0);
-    if (by === 'recentRating') return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
-    return 0;
-  });
-  renderResults(sorted);
-  clearMapMarkers();
-  renderMapMarkers(sorted);
+  // 舊版相容，現在由 setMode 處理
 }
 
 // ── Map Markers ─────────────────────────────────────────────────
