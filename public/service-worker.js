@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viral-spots-v1';
+const CACHE_NAME = 'viral-spots-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
