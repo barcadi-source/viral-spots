@@ -453,7 +453,12 @@ app.get('/api/trending', async (req, res) => {
     const viralIds      = new Set(pickByMode(basePlaces, 'viral'));
     const topRatedIds   = new Set(pickByMode(basePlaces, 'topRated'));
     const recentIds     = new Set(pickByMode(basePlaces, 'recentRating'));
-    const steadyIds     = new Set(pickByMode(basePlaces, 'steady'));
+    // 穩定成長：總評論數 / 近期週速度 > 52（推估存在超過一年）
+    // 近期速度越快相對總量越小 → 行銷刷評的店自然被過濾
+    const steadyIds     = new Set(pickByMode(
+      basePlaces.filter(p => (p.user_ratings_total || 0) >= 200),
+      'steady'
+    ));
 
     // 合併所有需要的 place_id（去重）
     const allIds = new Set([...viralIds, ...topRatedIds, ...recentIds, ...steadyIds]);
@@ -507,17 +512,32 @@ app.get('/api/trending', async (req, res) => {
                 : modeKey === 'recentRating' ? recentIds
                 : steadyIds;
 
-      return data
-        .filter(p => ids.has(p.place_id))
-        .sort((a, b) => {
+      let filtered = data.filter(p => ids.has(p.place_id));
+
+      // 穩定成長：額外過濾「總評論數 / 近期週速度 > 52」
+      // 代表即使以近期速度估算，也至少存在超過一年
+      if (modeKey === 'steady') {
+        filtered = filtered.filter(p => {
+          const weeklyRate = p.analysis.estimatedWeeklyVolume || 0;
+          const total = p.totalRatings || 0;
+          if (weeklyRate <= 0) return true;  // 速度為 0 的老店保留
+          return (total / weeklyRate) >= 52;
+        });
+      }
+
+      return filtered.sort((a, b) => {
           if (modeKey === 'viral')
             return (b.analysis.estimatedDailyRate || 0) - (a.analysis.estimatedDailyRate || 0);
           if (modeKey === 'topRated')
             return (b.rating || 0) - (a.rating || 0);
           if (modeKey === 'recentRating')
             return (b.analysis.recentAvgRating || 0) - (a.analysis.recentAvgRating || 0);
-          if (modeKey === 'steady')
-            return (b.analysis.trendScore || 0) - (a.analysis.trendScore || 0);
+          if (modeKey === 'steady') {
+            // 排序依據：評分 × log(總評論數)，口碑好且有歷史的店排前面
+            const scoreA = (a.rating || 0) * Math.log(a.totalRatings || 1);
+            const scoreB = (b.rating || 0) * Math.log(b.totalRatings || 1);
+            return scoreB - scoreA;
+          }
           return 0;
         });
     };
