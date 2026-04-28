@@ -421,6 +421,7 @@ app.get('/api/trending', async (req, res) => {
       .filter(p => !p.types?.some(t => EXCLUDE_TYPES.includes(t)))
       .filter(p => p.rating && p.user_ratings_total)
       .filter(p => (p.user_ratings_total || 0) >= 5)
+      .filter(p => p.opening_hours?.open_now !== false)  // 已確認關閉的才排除
       .filter(p => {
         const pLat = p.geometry?.location?.lat;
         const pLng = p.geometry?.location?.lng;
